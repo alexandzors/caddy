@@ -1,0 +1,33 @@
+name: Notify
+on:
+  repository_dispatch:
+    types: Notify
+# Used by local Diun instance
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Grab Caddy Repo Info
+      id: grabinfo
+      uses: cardinalby/git-get-release-action@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        repo: caddyserver/caddy
+        latest: 1
+
+    - name: Check Pre-Release
+      if: steps.grabinfo.outputs.prerelease == 'true'
+      shell: bash
+      run: |
+        curl \
+          -u ${{ secrets.NTFY_CRED }} \
+          -H "Title: Caddy Notify" \ 
+          -H "Priority: 1" \ 
+          -H "Content-Type: text/plain" \ 
+          -H "Tag: triangular_flag_on_post" \
+          -d "Repo: ${{ github.repository }}
+        The build process was skipped as the latest release is in pre-release" \
+          ${{ secrets.NTFY_URL }}

@@ -1,0 +1,118 @@
+name: Caddy
+on:
+  repository_dispatch:
+    types: Caddy
+  workflow_run:
+    workflows: ["Notify"]
+    types:
+      - completed
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.21'
+
+      - name: Get xcaddy Build Tool
+        run: |
+          go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      - name: Pull Local Repo
+        uses: actions/checkout@v3
+
+      - name: Build Binaries
+        id: build
+        run: |
+          sh ./build_linux.sh
+          sh ./build_win64.sh
+          chmod +x caddy
+
+      - name: Get Caddy Binary Version
+        id: caddy_version
+        run: |
+          CADDY=$(./caddy version)
+          vr="${CADDY}"
+          echo "version=$( echo $vr | head -n1 | cut -d " " -f1 )" >> $GITHUB_OUTPUT
+          echo "tag_name=$( echo $vr | head -n1 | cut -d " " -f1 )" >> $GITHUB_OUTPUT
+
+      - name: Get Release Notes
+        id: get_release_notes
+        uses: cardinalby/git-get-release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag: '${{ steps.caddy_version.outputs.tag_name }}'
+          repo: caddyserver/caddy
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "${{ steps.caddy_version.outputs.tag_name }}"
+          name: Caddy ${{ steps.caddy_version.outputs.version }}
+          body: |
+            # Release notes:
+            _[caddyserver/caddy](https://github.com/caddyserver/caddy)_
+            ${{ steps.get_release_notes.outputs.body }}
+          files: |
+            caddy
+            caddy.exe
+
+      - name: Docker Hub Login
+        id: login_docker
+        run: |
+          echo ${{ secrets.DOCKER_HUB_PW }} | docker login -u ${{ secrets.DOCKER_HUB_USR }} --password-stdin
+
+      - name: Build Docker Image
+        id: build_docker
+        if: success()
+        run: |
+          docker build -f ./Dockerfile -t ${{ secrets.DOCKER_HUB_USR }}/caddy:latest .
+          docker push ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
+
+      - name: Notify Failed
+        if: |
+          always() && 
+          (steps.build.outcome  == 'failed' || steps.build.outcome  == 'skipped') || 
+          (steps.build_docker.outcome  == 'failed' || steps.build_docker.outcome  == 'skipped')
+        run: |
+          curl \
+            -u ${{ secrets.NTFY_CRED }} \
+            -H "Title: Caddy Build" \
+            -H "Content-Type: text/plain" \
+            -H "Priority: 3" \
+            -H "Tag: no_entry" \
+            -d "Caddy Build failed!" \
+            -H "Actions: view, View Log, https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}" \
+            ${{ secrets.NTFY_URL }}
+      - name: Notify Success
+        if: always() && steps.build.outcome  == 'success' && steps.build_docker.outcome  == 'success'
+        run: |
+          curl \
+            -u ${{ secrets.NTFY_CRED }} \
+            -H "Title: New Caddy Release" \
+            -H "Content-Type: text/plain" \
+            -H "Priority: 1" \
+            -H "Tag: pushpin" \
+            -d "New Version: ${{ steps.caddy_version.outputs.tag_name }}
+          Docker Image Updated: ✔️" \
+            -H "Actions: view, See Release, ${{ steps.create_release.outputs.url }}; \
+                         view, See Image, https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags" \
+            ${{ secrets.NTFY_URL }}
+      - name: Notify Docker Fail
+        if: always() && steps.build.outcome  == 'success' && (steps.build_docker.outcome  == 'failed' || steps.build_docker.outcome  == 'skipped')
+        run: |
+          curl \
+            -u ${{ secrets.NTFY_CRED }} \
+            -H "Title: New Caddy Release" \
+            -H "Content-Type: text/plain" \
+            -H "Priority: 1" \
+            -H "Tag: pushpin" \
+            -d "New Version: ${{ steps.caddy_version.outputs.tag_name }}
+          Docker Image Updated: ⛔" \
+            -H "Actions: view, See Release, ${{ steps.create_release.outputs.url }}; \
+                         view, See Image, https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags" \
+                ${{ secrets.NTFY_URL }}
