@@ -20,6 +20,7 @@ Binary Releases: https://github.com/alexandzors/caddy/releases
 # Tags:
 
 - `:latest` -- most recent Caddy stable version.
+- `:dev` -- used for testing stuff. DO NOT USE :)
 
 # Added Modules:
 This image is built with the default [modules](https://caddyserver.com/docs/modules/) + the following:

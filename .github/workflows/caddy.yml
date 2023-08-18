@@ -54,8 +54,8 @@ jobs:
           tag_name: "${{ steps.caddy_version.outputs.tag_name }}"
           name: Caddy ${{ steps.caddy_version.outputs.version }}
           body: |
-            # Release notes:
-            _[caddyserver/caddy](https://github.com/caddyserver/caddy)_
+            **Caddy ${{ steps.caddy_version.outputs.tag_name }} release notes:**
+            _[caddyserver/caddy](https://github.com/caddyserver/caddy/releases/tag/${{ steps.caddy_version.outputs.tag_name }})_
             ${{ steps.get_release_notes.outputs.body }}
           files: |
             caddy
@@ -83,7 +83,7 @@ jobs:
             -u ${{ secrets.NTFY_CRED }} \
             -H "Title: Caddy Build" \
             -H "Content-Type: text/plain" \
-            -H "Priority: 3" \
+            -H "Priority: 4" \
             -H "Tag: no_entry" \
             -d "Caddy Build failed!" \
             -H "Actions: view, View Log, https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}" \
@@ -109,7 +109,7 @@ jobs:
             -u ${{ secrets.NTFY_CRED }} \
             -H "Title: New Caddy Release" \
             -H "Content-Type: text/plain" \
-            -H "Priority: 1" \
+            -H "Priority: 4" \
             -H "Tag: pushpin" \
             -d "New Version: ${{ steps.caddy_version.outputs.tag_name }}
           Docker Image Updated: ⛔" \
