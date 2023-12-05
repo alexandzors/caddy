@@ -75,8 +75,8 @@ jobs:
 
       - name: Notify Failed
         if: |
-          always() && 
-          (steps.build.outcome  == 'failed' || steps.build.outcome  == 'skipped') || 
+          always() && github.repository_owner == 'alexandzors' &&
+          (steps.build.outcome  == 'failed' || steps.build.outcome  == 'skipped') ||
           (steps.build_docker.outcome  == 'failed' || steps.build_docker.outcome  == 'skipped')
         run: |
           curl \
@@ -89,7 +89,7 @@ jobs:
             -H "Actions: view, View Log, https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}" \
             ${{ secrets.NTFY_URL }}
       - name: Notify Success
-        if: always() && steps.build.outcome  == 'success' && steps.build_docker.outcome  == 'success'
+        if: always() && github.repository_owner == 'alexandzors' && steps.build.outcome  == 'success' && steps.build_docker.outcome  == 'success'
         run: |
           curl \
             -u ${{ secrets.NTFY_CRED }} \
@@ -103,7 +103,7 @@ jobs:
                          view, See Image, https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags" \
             ${{ secrets.NTFY_URL }}
       - name: Notify Docker Fail
-        if: always() && steps.build.outcome  == 'success' && (steps.build_docker.outcome  == 'failed' || steps.build_docker.outcome  == 'skipped')
+        if: always() && github.repository_owner == 'alexandzors' && steps.build.outcome  == 'success' && (steps.build_docker.outcome  == 'failed' || steps.build_docker.outcome  == 'skipped')
         run: |
           curl \
             -u ${{ secrets.NTFY_CRED }} \

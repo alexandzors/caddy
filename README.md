@@ -9,7 +9,7 @@ Website: https://caddyserver.com/
 
 Community: https://caddy.community/
 
-Github: https://github.com/caddyserver/caddy
+GitHub: https://github.com/caddyserver/caddy
 
 Parent Image: https://hub.docker.com/_/caddy
 
@@ -58,10 +58,10 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - /home/caddy/Caddyfile:/etc/caddy/Caddyfile:ro # Caddyfile for configuration
-      - /home/caddy/cloudflare_proxies:/etc/caddy/cloudflare_proxies:ro # cloudflare_proxies file for trusted proxy config.
-      - /home/caddy/data:/data
-      - /home/caddy/logs:/logs # Optional for setting up domain logging files.
+      - ${PWD}/Caddyfile:/etc/caddy/Caddyfile:ro # Caddyfile for configuration
+      - ${PWD}/config:/etc/caddy/config # Optional if you want outside config files not polluting caddy parent dir
+      - ${PWD}/.data:/data # Location of on host cert storage.
+      - ${PWD}/logs:/logs # Optional if you want to set up domain logging files.
 
 networks:
   caddy:
@@ -90,7 +90,7 @@ https://github.com/caddy-dns/cloudflare#config-examples
 		"dns": {
 			"provider": {
 				"name": "cloudflare",
-				"api_token": "{env.CF_API_TOKEN}"
+				"api_token": "{env.CLOUDFLARETOKEN}"
 			}
 		}
 	}
@@ -103,7 +103,7 @@ Make it a reusable block:
 ```
 (tls) {
     tls {
-        dns cloudflare {env.CF_API_KEY}
+        dns cloudflare {env.CLOUDFLARETOKEN}
     }
 }
 ```
@@ -119,7 +119,7 @@ domain.tld {
 
 `http_ntlm` acts the same as `http` except HTTP its always version 1.1 and Keep-Alive is disabled.
 
-## Json API
+## JSON API
 ```json
 {
   "match": [
