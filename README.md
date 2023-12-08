@@ -123,7 +123,26 @@ Pulls Cloudflare endpoint IPs for use in `trusted_proxies` global config
 
 ## JSON API
 
-Soon<sup>tm</sup>
+```json
+{
+  "apps": {
+    "http": {
+      "servers": {
+        "srv0": {
+          "listen": [
+            ":443"
+          ],
+          "trusted_proxies": {
+            "interval": 43200000000000,
+            "source": "cloudflare",
+            "timeout": 15000000000
+          }
+        }
+      }
+    }
+  }
+}
+```
 
 
 ## Caddyfile
