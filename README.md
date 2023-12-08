@@ -28,7 +28,7 @@ This image is built with the default [modules](https://caddyserver.com/docs/modu
 > #### ***Note**: sjtug/caddy2-filter has been replaced with caddyserver/replace-response
 
 - [dns.providers.cloudflare](https://caddyserver.com/docs/modules/dns.providers.cloudflare)
-- [weidideng/caddy-cloudflare-ip](https://github.com/weidideng/caddy-cloudflare-ip)
+- [WeidiDeng/caddy-cloudflare-ip](https://github.com/WeidiDeng/caddy-cloudflare-ip)
 - [caddyserver/ntlm-transport](https://github.com/caddyserver/ntlm-transport)
 - [caddyserver/replace-response](https://github.com/caddyserver/replace-response)
 - [greenpau/caddy-security](https://github.com/greenpau/caddy-security)
