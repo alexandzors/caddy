@@ -28,11 +28,13 @@ This image is built with the default [modules](https://caddyserver.com/docs/modu
 > #### ***Note**: sjtug/caddy2-filter has been replaced with caddyserver/replace-response
 
 - [dns.providers.cloudflare](https://caddyserver.com/docs/modules/dns.providers.cloudflare)
+- [weidideng/caddy-cloudflare-ip](https://github.com/weidideng/caddy-cloudflare-ip)
 - [caddyserver/ntlm-transport](https://github.com/caddyserver/ntlm-transport)
 - [caddyserver/replace-response](https://github.com/caddyserver/replace-response)
 - [greenpau/caddy-security](https://github.com/greenpau/caddy-security)
 - [caddyserver/transform-encoder](https://github.com/caddyserver/transform-encoder)
 - [caddyserver/nginx-adapter](https://github.com/caddyserver/nginx-adapter)
+- [github.com/RussellLuo/caddy-ext/ratelimit](https://github.com/RussellLuo/caddy-ext/ratelimit)
 
 # Deploying with Docker Compose
 
@@ -115,6 +117,33 @@ domain.tld {
   reverse_proxy 127.0.0.1:81
 }
 ```
+
+# Using weidideng/caddy-cloudflare-ip
+Pulls Cloudflare endpoint IPs for use in `trusted_proxies` global config
+
+## JSON API
+
+Soon<sup>tm</sup>
+
+
+## Caddyfile
+
+```
+# Global Config
+{
+  servers {
+    trusted_proxies cloudflare {
+      interval 12h
+      timeoute 15s
+    }
+  }
+}
+
+mysite.com {
+  respond * "Hello there"
+}
+```
+
 # Using NTLM-Transport
 
 `http_ntlm` acts the same as `http` except HTTP its always version 1.1 and Keep-Alive is disabled.
@@ -181,3 +210,4 @@ wac.domain.tld {
 - Caddy-Security usage: [https://authp.github.io/docs/intro](https://authp.github.io/docs/intro)
 - Transform Encoder usage: [https://github.com/caddyserver/transform-encoder](https://github.com/caddyserver/transform-encoder)
 - Nginx Adapter usage: [https://github.com/caddyserver/nginx-adapter](https://github.com/caddyserver/nginx-adapter#use)
+- Ratelimit usage: [https://github.com/RussellLuo/caddy-ext/tree/master/ratelimit](https://github.com/RussellLuo/caddy-ext/tree/master/ratelimit)
