@@ -70,8 +70,9 @@ jobs:
         id: build_docker
         if: success()
         run: |
-          docker build -f ./Dockerfile -t ${{ secrets.DOCKER_HUB_USR }}/caddy:latest .
+          docker build -f ./Dockerfile -t ${{ secrets.DOCKER_HUB_USR }}/caddy .
           docker push ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
+          docker push ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ steps.caddy_version.outputs.version }}
 
       - name: Notify Failed
         if: |
