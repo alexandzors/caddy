@@ -1,5 +1,6 @@
 name: Caddy
 on:
+  workflow_dispatch:
   repository_dispatch:
     types: Caddy
   workflow_run:
@@ -11,34 +12,43 @@ jobs:
   build-release:
     runs-on: ubuntu-latest
     steps:
+      # Setup
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: 'arm64,amd64'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
           go-version: '1.21'
 
-      - name: Get xcaddy Build Tool
-        run: |
-          go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-
+      # Install xcaddy for binary building 
+      - name: Get xcaddy tool
+        run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+            
       - name: Pull Local Repo
         uses: actions/checkout@v3
 
+      # Build Caddy binaries with xcaddy
       - name: Build Binaries
-        id: build
         run: |
-          sh ./build_linux.sh
-          sh ./build_win64.sh
-          chmod +x caddy
-
-      - name: Get Caddy Binary Version
+          bash build.sh
+      
+      # Get caddy version from binarys and set version/tag info
+      - name: Get Version
         id: caddy_version
         run: |
           CADDY=$(./caddy version)
           vr="${CADDY}"
           echo "version=$( echo $vr | head -n1 | cut -d " " -f1 )" >> $GITHUB_OUTPUT
-          echo "tag_name=$( echo $vr | head -n1 | cut -d " " -f1 )" >> $GITHUB_OUTPUT
+          echo "tag_name=$( echo $vr | head -n1 | cut -d " " -f1 )" >> $GITHUB_OUTPUT        
 
-      - name: Get Release Notes
+      # Get the latest caddy release notes from version tag
+      - name: Get latest Caddy release notes
         id: get_release_notes
         uses: cardinalby/git-get-release-action@v1
         env:
@@ -47,6 +57,7 @@ jobs:
           tag: '${{ steps.caddy_version.outputs.tag_name }}'
           repo: caddyserver/caddy
 
+      # Create Binary release with release notes from upstream
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -58,62 +69,76 @@ jobs:
             _[caddyserver/caddy](https://github.com/caddyserver/caddy/releases/tag/${{ steps.caddy_version.outputs.tag_name }})_
             ${{ steps.get_release_notes.outputs.body }}
           files: |
-            caddy
-            caddy.exe
-
+            amd64/caddy
+            amd64/caddy.exe
+            arm64/caddy_arm64
+        
+      # Login to Docker Hub
       - name: Docker Hub Login
-        id: login_docker
-        run: |
-          echo ${{ secrets.DOCKER_HUB_PW }} | docker login -u ${{ secrets.DOCKER_HUB_USR }} --password-stdin
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USR }}
+          password: ${{ secrets.DOCKER_HUB_PW }}
 
-      - name: Build Docker Image
-        id: build_docker
+      # Build Docker Containers
+      - name: Build amd64 Container
+        uses: docker/build-push-action@v5
+        with:
+          context: amd64/
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ steps.caddy_version.outputs.version }}
+            
+      - name: Build arm64 Container
+        uses: docker/build-push-action@v5
+        with:
+          context: arm64/
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ steps.caddy_version.outputs.version }}-arm64
+                
+      - name: Inspect Docker images
+        run: |
+          docker buildx imagetools inspect alexandzors/caddy:latest
+          docker buildx imagetools inspect alexandzors/caddy:latest-arm64
+
+      # Send workflow notifications to self hosted ntfy instance based on run status.
+      - name: Notify on Success
+        uses: niniyas/ntfy-action@master
         if: success()
-        run: |
-          docker build -f ./Dockerfile -t ${{ secrets.DOCKER_HUB_USR }}/caddy:latest -t ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ steps.caddy_version.outputs.version }}
-          .
-          docker image push --all-tags
+        with:
+          url: ${{ secrets.NTFY_URL }}
+          topic: ${{ secrets.NTFY_TOPIC }}
+          priority: 1
+          headers: '{"authorization": Basic ${{ secrets.NTFY_CRED }} }'
+          tags: pushpin,caddy
+          title: New Caddy release!
+          details: 'New Version: ${{ steps.caddy_version.outputs.tag_name }}'
+          icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
+          actions: '[{"action": "view","label": "See Release","url": "${{ steps.create_release.outputs.url }}"}, {"action": "view","label": "See Image","url": "https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags"}]'
 
-      - name: Notify Failed
-        if: |
-          always() && github.repository_owner == 'alexandzors' &&
-          (steps.build.outcome  == 'failed' || steps.build.outcome  == 'skipped') ||
-          (steps.build_docker.outcome  == 'failed' || steps.build_docker.outcome  == 'skipped')
-        run: |
-          curl \
-            -u ${{ secrets.NTFY_CRED }} \
-            -H "Title: Caddy Build" \
-            -H "Content-Type: text/plain" \
-            -H "Priority: 4" \
-            -H "Tag: no_entry" \
-            -d "Caddy Build failed!" \
-            -H "Actions: view, View Log, https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}" \
-            ${{ secrets.NTFY_URL }}
-      - name: Notify Success
-        if: always() && github.repository_owner == 'alexandzors' && steps.build.outcome  == 'success' && steps.build_docker.outcome  == 'success'
-        run: |
-          curl \
-            -u ${{ secrets.NTFY_CRED }} \
-            -H "Title: New Caddy Release" \
-            -H "Content-Type: text/plain" \
-            -H "Priority: 1" \
-            -H "Tag: pushpin" \
-            -d "New Version: ${{ steps.caddy_version.outputs.tag_name }}
-          Docker Image Updated: ✔️" \
-            -H "Actions: view, See Release, ${{ steps.create_release.outputs.url }}; \
-                         view, See Image, https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags" \
-            ${{ secrets.NTFY_URL }}
-      - name: Notify Docker Fail
-        if: always() && github.repository_owner == 'alexandzors' && steps.build.outcome  == 'success' && (steps.build_docker.outcome  == 'failed' || steps.build_docker.outcome  == 'skipped')
-        run: |
-          curl \
-            -u ${{ secrets.NTFY_CRED }} \
-            -H "Title: New Caddy Release" \
-            -H "Content-Type: text/plain" \
-            -H "Priority: 4" \
-            -H "Tag: pushpin" \
-            -d "New Version: ${{ steps.caddy_version.outputs.tag_name }}
-          Docker Image Updated: ⛔" \
-            -H "Actions: view, See Release, ${{ steps.create_release.outputs.url }}; \
-                         view, See Image, https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags" \
-                ${{ secrets.NTFY_URL }}
+      - name: Notify on Failure
+        uses: niniyas/ntfy-action@master
+        if: failure()
+        with:
+          url: ${{ secrets.NTFY_URL }}
+          topic: ${{ secrets.NTFY_TOPIC }}
+          priority: 4
+          headers: '{"authorization": Basic ${{ secrets.NTFY_CRED }} }'
+          tags: no_entry,caddy
+          title: Caddy build failed!
+          details: One or more of the build steps in the alexandzors/caddy workflow failed.
+          icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
+          actions: '[{"action": "view","label": "View Log","url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"}]'
+
+      - name: Notify on Cancelled
+        uses: niniyas/ntfy-action@master
+        if: cancelled()
+        with:
+          url: ${{ secrets.NTFY_URL }}
+          topic: ${{ secrets.NTFY_TOPIC }}
+          priority: 3
+          headers: '{"authorization": Basic ${{ secrets.NTFY_CRED }} }'
+          tags: no_entry_sign,caddy
+          title: Caddy build cancelled!
+          details: The alexandzors/caddy build workflow was cancelled.
+          icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
+          actions: '[{"action": "view","label": "View Log","url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"}]'

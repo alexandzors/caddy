@@ -1,3 +1,8 @@
+# Third Party Note
+This is a third party build for https://caddyserver.com/. Please do not use this in a *production* environment. This is merely available for me and anyone else that needs a quick docker image / binary with the below plugins already installed. You can always use the download page @ https://caddyserver.com/download to generate your own binary. 
+
+Both the docker image and binary are built from Caddy sources with only the below-mentioned plugins!
+
 # Caddy
 [![Caddy](https://github.com/alexandzors/caddy/actions/workflows/caddy.yml/badge.svg?branch=main&event=workflow_run)](https://github.com/alexandzors/caddy/actions/workflows/caddy.yml)
 
@@ -19,13 +24,22 @@ Binary Releases: https://github.com/alexandzors/caddy/releases
 
 # Tags:
 
+## amd64
 - `:latest` -- most recent Caddy stable version.
+- `:#.#.#` -- tagged stable version of Caddy (v2.7.6+ only)
 - `:dev` -- used for testing stuff. DO NOT USE :)
+
+## arm64/v8
+- `:latest-arm64` -- most recent Caddy stable version for arm64.
+- `:#.#.#-arm64` -- tagged stable version of Caddy for arm64 (v2.7.6+ only)
+
+## Windows Container version is currently not planned.
 
 # Added Modules:
 This image is built with the default [modules](https://caddyserver.com/docs/modules/) + the following:
 
 > #### ***Note**: sjtug/caddy2-filter has been replaced with caddyserver/replace-response
+> #### ***Note**: RussellLuo/caddy-ext/ratelimit has been replaced with mholt/caddy-ratelimit
 
 - [dns.providers.cloudflare](https://caddyserver.com/docs/modules/dns.providers.cloudflare)
 - [WeidiDeng/caddy-cloudflare-ip](https://github.com/WeidiDeng/caddy-cloudflare-ip)
@@ -34,11 +48,11 @@ This image is built with the default [modules](https://caddyserver.com/docs/modu
 - [greenpau/caddy-security](https://github.com/greenpau/caddy-security)
 - [caddyserver/transform-encoder](https://github.com/caddyserver/transform-encoder)
 - [caddyserver/nginx-adapter](https://github.com/caddyserver/nginx-adapter)
-- [github.com/RussellLuo/caddy-ext/ratelimit](https://github.com/RussellLuo/caddy-ext/ratelimit)
+- [github.com/mholt/caddy-ratelimit](github.com/mholt/caddy-ratelimit)
 
 # Deploying with Docker Compose
 
-*This example includes an external docker network for other containers to attach to. This makes it so you can deploy this, attach other containers to the network, and then call said containers via their dns name rather then container ip. To create the network: `docker network create caddy-dockerinternal-net` then in each service you want exposed by caddy, add both `networks:` blocks to their compose files. Caddy will use both the bridge network using ports 80/443 and talk to other containers over the `caddy-dockerinternal-net` network.* 
+*This example includes an external docker network for other containers to attach to. This makes it, so you can deploy this, attach other containers to the network, and then call said containers via their dns name rather then container ip. To create the network: `docker network create caddy-dockerinternal-net` then in each service you want exposed by caddy, add both `networks:` blocks to their compose files. Caddy will use both the bridge network using ports 80/443 and talk to other containers over the `caddy-dockerinternal-net` network.* 
 
 ```yml
 # For use with <alexandzors/caddy>
