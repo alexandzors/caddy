@@ -243,4 +243,4 @@ wac.domain.tld {
 - Caddy-Security usage: [https://authp.github.io/docs/intro](https://authp.github.io/docs/intro)
 - Transform Encoder usage: [https://github.com/caddyserver/transform-encoder](https://github.com/caddyserver/transform-encoder)
 - Nginx Adapter usage: [https://github.com/caddyserver/nginx-adapter](https://github.com/caddyserver/nginx-adapter#use)
-- Ratelimit usage: [https://github.com/RussellLuo/caddy-ext/tree/master/ratelimit](https://github.com/RussellLuo/caddy-ext/tree/master/ratelimit)
+- Ratelimit usage: [https://github.com/mholt/caddy-ratelimit](https://github.com/mholt/caddy-ratelimit)
