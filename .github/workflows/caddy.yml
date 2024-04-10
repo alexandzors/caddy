@@ -105,8 +105,8 @@ jobs:
         uses: niniyas/ntfy-action@master
         if: success()
         with:
-          url: ${{ secrets.NTFY_URL }}
-          topic: ${{ secrets.NTFY_TOPIC }}
+          url: '${{ secrets.NTFY_URL }}'
+          topic: '${{ secrets.NTFY_TOPIC }}'
           priority: 1
           headers: '{"authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
           tags: pushpin,caddy
@@ -119,8 +119,8 @@ jobs:
         uses: niniyas/ntfy-action@master
         if: failure()
         with:
-          url: ${{ secrets.NTFY_URL }}
-          topic: ${{ secrets.NTFY_TOPIC }}
+          url: '${{ secrets.NTFY_URL }}'
+          topic: '${{ secrets.NTFY_TOPIC }}'
           priority: 4
           headers: '{"authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
           tags: no_entry,caddy
@@ -133,8 +133,8 @@ jobs:
         uses: niniyas/ntfy-action@master
         if: cancelled()
         with:
-          url: ${{ secrets.NTFY_URL }}
-          topic: ${{ secrets.NTFY_TOPIC }}
+          url: '${{ secrets.NTFY_URL }}'
+          topic: '${{ secrets.NTFY_TOPIC }}'
           priority: 3
           headers: '{"authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
           tags: no_entry_sign,caddy
