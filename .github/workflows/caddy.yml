@@ -44,8 +44,11 @@ jobs:
         run: |
           CADDY=$(./amd64/caddy version)
           vr="${CADDY}"
-          echo "version=$( echo $vr | head -n1 | cut -d " " -f1 )" >> $GITHUB_OUTPUT
-          echo "tag_name=$( echo $vr | head -n1 | cut -d " " -f1 )" >> $GITHUB_OUTPUT        
+          # Extract version and remove the 'v' from the version string for the 'version' variable
+          version=$(echo $vr | head -n1 | cut -d " " -f1 | sed 's/^v//')
+          tag_name=$(echo $vr | head -n1 | cut -d " " -f1)
+          echo "version=$version" >> $GITHUB_ENV
+          echo "tag_name=$tag_name" >> $GITHUB_ENV       
 
       # Get the latest caddy release notes from version tag
       - name: Get latest Caddy release notes
@@ -63,7 +66,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: "${{ steps.caddy_version.outputs.tag_name }}"
-          name: Caddy ${{ steps.caddy_version.outputs.version }}
+          name: Caddy ${{ steps.caddy_version.outputs.tag_name }}
           body: |
             **Caddy ${{ steps.caddy_version.outputs.tag_name }} release notes:**
             _[caddyserver/caddy](https://github.com/caddyserver/caddy/releases/tag/${{ steps.caddy_version.outputs.tag_name }})_
