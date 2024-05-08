@@ -87,6 +87,8 @@ jobs:
           context: amd64/
           push: true
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ steps.caddy_version.outputs.version }}
+          build-args: |
+            "VERSION=${{ steps.caddy_version.outputs.version }}"
             
       - name: Build arm64 Container
         uses: docker/build-push-action@v5
@@ -94,51 +96,54 @@ jobs:
           context: arm64/
           push: true
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ steps.caddy_version.outputs.version }}-arm64
-                
+          build-args: |
+            "VERSION=${{ steps.caddy_version.outputs.version }}"
+    
       - name: Inspect Docker images
         run: |
           docker buildx imagetools inspect alexandzors/caddy:latest
           docker buildx imagetools inspect alexandzors/caddy:latest-arm64
 
+      # Do not have time to fix this right now...    
       # Send workflow notifications to self hosted ntfy instance based on run status.
-      - name: Notify on Success
-        uses: niniyas/ntfy-action@master
-        if: success()
-        with:
-          url: '${{ secrets.NTFY_URL }}'
-          topic: '${{ secrets.NTFY_TOPIC }}'
-          priority: 1
-          headers: '{"authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
-          tags: pushpin,caddy
-          title: New Caddy release!
-          details: 'New Version: ${{ steps.caddy_version.outputs.tag_name }}'
-          icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
-          actions: '[{"action": "view","label": "See Release","url": "${{ steps.create_release.outputs.url }}"}, {"action": "view","label": "See Image","url": "https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags"}]'
+      # - name: Notify on Success
+      #   uses: niniyas/ntfy-action@master
+      #   if: success()
+      #   with:
+      #     url: '${{ secrets.NTFY_URL }}'
+      #     topic: '${{ secrets.NTFY_TOPIC }}'
+      #     priority: 1
+      #     headers: '{"Authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
+      #     tags: pushpin,caddy
+      #     title: New Caddy release!
+      #     details: 'New Version: ${{ steps.caddy_version.outputs.tag_name }}'
+      #     icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
+      #     actions: '[{"action": "view","label": "See Release","url": "${{ steps.create_release.outputs.url }}"}, {"action": "view","label": "See Image","url": "https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags"}]'
 
-      - name: Notify on Failure
-        uses: niniyas/ntfy-action@master
-        if: failure()
-        with:
-          url: '${{ secrets.NTFY_URL }}'
-          topic: '${{ secrets.NTFY_TOPIC }}'
-          priority: 4
-          headers: '{"authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
-          tags: no_entry,caddy
-          title: Caddy build failed!
-          details: One or more of the build steps in the alexandzors/caddy workflow failed.
-          icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
-          actions: '[{"action": "view","label": "View Log","url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"}]'
+      # - name: Notify on Failure
+      #   uses: niniyas/ntfy-action@master
+      #   if: failure()
+      #   with:
+      #     url: '${{ secrets.NTFY_URL }}'
+      #     topic: '${{ secrets.NTFY_TOPIC }}'
+      #     priority: 4
+      #     headers: '{"Authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
+      #     tags: no_entry,caddy
+      #     title: Caddy build failed!
+      #     details: One or more of the build steps in the alexandzors/caddy workflow failed.
+      #     icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
+      #     actions: '[{"action": "view","label": "View Log","url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"}]'
 
-      - name: Notify on Cancelled
-        uses: niniyas/ntfy-action@master
-        if: cancelled()
-        with:
-          url: '${{ secrets.NTFY_URL }}'
-          topic: '${{ secrets.NTFY_TOPIC }}'
-          priority: 3
-          headers: '{"authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
-          tags: no_entry_sign,caddy
-          title: Caddy build cancelled!
-          details: The alexandzors/caddy build workflow was cancelled.
-          icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
-          actions: '[{"action": "view","label": "View Log","url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"}]'
+      # - name: Notify on Cancelled
+      #   uses: niniyas/ntfy-action@master
+      #   if: cancelled()
+      #   with:
+      #     url: '${{ secrets.NTFY_URL }}'
+      #     topic: '${{ secrets.NTFY_TOPIC }}'
+      #     priority: 3
+      #     headers: '{"Authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
+      #     tags: no_entry_sign,caddy
+      #     title: Caddy build cancelled!
+      #     details: The alexandzors/caddy build workflow was cancelled.
+      #     icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
+      #     actions: '[{"action": "view","label": "View Log","url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"}]'

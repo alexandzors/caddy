@@ -1,4 +1,5 @@
-FROM arm64v8/caddy:alpine
+ARG  VERSION=2.7
+FROM arm64v8/caddy:${VERSION}-alpine
 
 COPY ./caddy_arm64 /usr/bin/caddy
 RUN chmod +x /usr/bin/caddy
