@@ -47,14 +47,14 @@ jobs:
           # Extract version and remove the 'v' from the version string for the 'version' variable
           VERSION=$(echo $vr | head -n1 | cut -d " " -f1 | sed 's/^v//')
           TAG=$( echo $vr | head -n1 | cut -d " " -f1 )
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Var Debug
         run: |
           echo "TAG: ${{ env.TAG }}"
           echo "VERSION: ${{ env.VERSION }}"
-          
+
       # Get the latest caddy release notes from version tag
       - name: Get latest Caddy release notes
         id: get_release_notes
