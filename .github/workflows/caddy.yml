@@ -104,13 +104,14 @@ jobs:
           context: arm64/
           push: true
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
+          platforms: linux/arm64
           build-args: |
             "VERSION=${{ env.VERSION }}"
     
       - name: Inspect Docker images
         run: |
-          docker buildx imagetools inspect alexandzors/caddy:latest
-          docker buildx imagetools inspect alexandzors/caddy:latest-arm64
+          docker buildx imagetools inspect ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
+          docker buildx imagetools inspect ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64
 
       # Do not have time to fix this right now...    
       # Send workflow notifications to self hosted ntfy instance based on run status.
