@@ -45,10 +45,8 @@ jobs:
           CADDY=$(./amd64/caddy version)
           vr="${CADDY}"
           # Extract version and remove the 'v' from the version string for the 'version' variable
-          version=$(echo $vr | head -n1 | cut -d " " -f1 | sed 's/^v//')
-          echo "version=$version" >> $GITHUB_ENV
-          tag_name=$(echo $vr | head -n1 | cut -d " " -f1)
-          echo "tag_name=$tag_name" >> $GITHUB_ENV
+          echo "VERSION=$(echo $vr | head -n1 | cut -d " " -f1 | sed 's/^v//')" >> $GITHUB_OUTPUT
+          echo "TAG=$( echo $vr | head -n1 | cut -d " " -f1 )" >> $GITHUB_OUTPUT
 
       # Get the latest caddy release notes from version tag
       - name: Get latest Caddy release notes
@@ -57,7 +55,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag: "${{ steps.caddy_version.outputs.tag_name }}"
+          tag: ${{ env.TAG }}
           repo: caddyserver/caddy
 
       # Create Binary release with release notes from upstream
@@ -65,11 +63,11 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "${{ steps.caddy_version.outputs.tag_name }}"
-          name: Caddy ${{ steps.caddy_version.outputs.tag_name }}
+          tag_name: ${{ env.TAG }}
+          name: Caddy ${{ env.VERSION }}
           body: |
-            **Caddy ${{ steps.caddy_version.outputs.tag_name }} release notes:**
-            _[caddyserver/caddy](https://github.com/caddyserver/caddy/releases/tag/${{ steps.caddy_version.outputs.tag_name }})_
+            **Caddy ${{ env.TAG }} release notes:**
+            _[caddyserver/caddy](https://github.com/caddyserver/caddy/releases/tag/${{ env.TAG }})_
             ${{ steps.get_release_notes.outputs.body }}
           files: |
             amd64/caddy
@@ -89,18 +87,18 @@ jobs:
         with:
           context: amd64/
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ steps.caddy_version.outputs.version }}
+          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}
           build-args: |
-            "VERSION=${{ steps.caddy_version.outputs.version }}"
+            "VERSION=${{ env.VERSION }}"
             
       - name: Build arm64 Container
         uses: docker/build-push-action@v5
         with:
           context: arm64/
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ steps.caddy_version.outputs.version }}-arm64
+          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
           build-args: |
-            "VERSION=${{ steps.caddy_version.outputs.version }}"
+            "VERSION=${{ env.VERSION }}"
     
       - name: Inspect Docker images
         run: |
@@ -119,7 +117,7 @@ jobs:
       #     headers: '{"Authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
       #     tags: pushpin,caddy
       #     title: New Caddy release!
-      #     details: 'New Version: ${{ steps.caddy_version.outputs.tag_name }}'
+      #     details: 'New Version: ${{ env.VERSION }}'
       #     icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
       #     actions: '[{"action": "view","label": "See Release","url": "${{ steps.create_release.outputs.url }}"}, {"action": "view","label": "See Image","url": "https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags"}]'
 
