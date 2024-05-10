@@ -4,7 +4,7 @@ This is a third party build for https://caddyserver.com/. Please do not use this
 Both the docker image and binary are built from Caddy sources with only the below-mentioned plugins!
 
 # Caddy
-[![Caddy](https://github.com/alexandzors/caddy/actions/workflows/caddy.yml/badge.svg?branch=main&event=workflow_run)](https://github.com/alexandzors/caddy/actions/workflows/caddy.yml)
+[![Caddy](https://github.com/alexandzors/caddy/actions/workflows/caddy.yml/badge.svg?branch=main)](https://github.com/alexandzors/caddy/actions/workflows/caddy.yml)
 
 > Caddy is a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go.
 
@@ -23,6 +23,8 @@ Build Repo: https://github.com/alexandzors/caddy
 Binary Releases: https://github.com/alexandzors/caddy/releases
 
 # Tags:
+
+***Note**: Tags have changed. The 'v' has been stripped from image tags. Please update your run/compose files!*
 
 ## amd64
 - `:latest` -- most recent Caddy stable version.
