@@ -1,4 +1,4 @@
-ARG VERSION=2.7
+ARG VERSION=2.8
 FROM caddy:${VERSION}-alpine
 
 COPY ./caddy /usr/bin/caddy
