@@ -1,4 +1,4 @@
-ARG  VERSION=2.8
+ARG  VERSION=2.9
 FROM arm64v8/caddy:${VERSION}-alpine
 
 COPY ./caddy_arm64 /usr/bin/caddy
