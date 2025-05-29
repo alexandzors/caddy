@@ -29,7 +29,7 @@ jobs:
       # Install xcaddy for binary building 
       - name: Get xcaddy tool
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-            
+
       - name: Pull Local Repo
         uses: actions/checkout@v4
 
@@ -37,7 +37,7 @@ jobs:
       - name: Build Binaries
         run: |
           bash build.sh
-      
+
       # Get caddy version from binarys and set version/tag info
       - name: Get Version
         id: caddy_version
@@ -80,7 +80,7 @@ jobs:
             amd64/caddy
             amd64/caddy.exe
             arm64/caddy_arm64
-        
+
       # Login to Docker Hub
       - name: Docker Hub Login
         uses: docker/login-action@v3
@@ -97,7 +97,7 @@ jobs:
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}
           build-args: |
             "VERSION=${{ env.VERSION }}"
-            
+
       - name: Build arm64 Container
         uses: docker/build-push-action@v5
         with:
@@ -107,7 +107,7 @@ jobs:
           platforms: linux/arm64
           build-args: |
             "VERSION=${{ env.VERSION }}"
-    
+
       - name: Inspect Docker images
         run: |
           docker buildx imagetools inspect ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
