@@ -26,7 +26,7 @@ jobs:
         with:
           go-version: '1.21'
 
-      # Install xcaddy for binary building 
+      # Install xcaddy for binary building
       - name: Get xcaddy tool
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 
@@ -80,6 +80,7 @@ jobs:
             amd64/caddy
             amd64/caddy.exe
             arm64/caddy_arm64
+            darwin/caddy_darwin
 
       # Login to Docker Hub
       - name: Docker Hub Login
@@ -92,7 +93,8 @@ jobs:
       - name: Build amd64 Container
         uses: docker/build-push-action@v5
         with:
-          context: amd64/
+          context: .
+          dockerfile: Dockerfile.x86
           push: true
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}
           build-args: |
@@ -101,58 +103,22 @@ jobs:
       - name: Build arm64 Container
         uses: docker/build-push-action@v5
         with:
-          context: arm64/
+          context: .
+          dockerfile: Dockerfile.arm
           push: true
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
           platforms: linux/arm64
           build-args: |
             "VERSION=${{ env.VERSION }}"
 
-      - name: Inspect Docker images
+      - name: Create Manifest :latest
         run: |
-          docker buildx imagetools inspect ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
-          docker buildx imagetools inspect ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:latest \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64
+          docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
 
-      # Do not have time to fix this right now...    
-      # Send workflow notifications to self hosted ntfy instance based on run status.
-      # - name: Notify on Success
-      #   uses: niniyas/ntfy-action@master
-      #   if: success()
-      #   with:
-      #     url: '${{ secrets.NTFY_URL }}'
-      #     topic: '${{ secrets.NTFY_TOPIC }}'
-      #     priority: 1
-      #     headers: '{"Authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
-      #     tags: pushpin,caddy
-      #     title: New Caddy release!
-      #     details: 'New Version: ${{ env.VERSION }}'
-      #     icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
-      #     actions: '[{"action": "view","label": "See Release","url": "${{ steps.create_release.outputs.url }}"}, {"action": "view","label": "See Image","url": "https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USR}}/caddy/tags"}]'
-
-      # - name: Notify on Failure
-      #   uses: niniyas/ntfy-action@master
-      #   if: failure()
-      #   with:
-      #     url: '${{ secrets.NTFY_URL }}'
-      #     topic: '${{ secrets.NTFY_TOPIC }}'
-      #     priority: 4
-      #     headers: '{"Authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
-      #     tags: no_entry,caddy
-      #     title: Caddy build failed!
-      #     details: One or more of the build steps in the alexandzors/caddy workflow failed.
-      #     icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
-      #     actions: '[{"action": "view","label": "View Log","url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"}]'
-
-      # - name: Notify on Cancelled
-      #   uses: niniyas/ntfy-action@master
-      #   if: cancelled()
-      #   with:
-      #     url: '${{ secrets.NTFY_URL }}'
-      #     topic: '${{ secrets.NTFY_TOPIC }}'
-      #     priority: 3
-      #     headers: '{"Authorization": "Basic ${{ secrets.NTFY_CRED }}" }'
-      #     tags: no_entry_sign,caddy
-      #     title: Caddy build cancelled!
-      #     details: The alexandzors/caddy build workflow was cancelled.
-      #     icon: 'https://raw.githubusercontent.com/loganmarchione/homelab-svg-assets/f34e7c57d72973510cf68b79206f3528f55a01fc/assets/github-invertocat.svg'
-      #     actions: '[{"action": "view","label": "View Log","url": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}"}]'
+      - name: Create manifest :${{ env.VERSION }}
+        run: |
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }} \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
+          docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}

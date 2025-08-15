@@ -24,9 +24,9 @@ jobs:
       run: |
         curl \
           -u ${{ secrets.NTFY_CRED }} \
-          -H "Title: Caddy Notify" \ 
-          -H "Priority: 1" \ 
-          -H "Content-Type: text/plain" \ 
+          -H "Title: Caddy Notify" \
+          -H "Priority: 1" \
+          -H "Content-Type: text/plain" \
           -H "Tag: triangular_flag_on_post" \
           -d "Repo: ${{ github.repository }}
         The build process was skipped as the latest release is in pre-release" \
