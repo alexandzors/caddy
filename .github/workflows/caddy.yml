@@ -97,6 +97,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
+          no-cache: true
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-amd64, ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-amd64
 
       - name: Build and Push ARM Docker Images
@@ -106,6 +107,7 @@ jobs:
           file: ./Dockerfile.arm
           platforms: linux/arm64
           push: true
+          no-cache: true
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64
 
       # Create and push manifest for multi-arch image
