@@ -94,7 +94,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: Dockerfile
+          dockerfile: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}
           build-args: |
@@ -104,7 +104,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: Dockerfile.arm
+          dockerfile: ./Dockerfile.arm
           push: true
           tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
           platforms: linux/arm64
@@ -117,7 +117,7 @@ jobs:
             --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64
           docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
 
-      - name: Create manifest :${{ env.VERSION }}
+      - name: Create manifest version
         run: |
           docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }} \
             --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
