@@ -90,37 +90,31 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PW }}
 
       # Build Docker Containers
-      - name: Build amd64 Container
+      - name: Build and Push Docker Images
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-amd64, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-amd64
-          build-args: |
-            "VERSION=${{ env.VERSION }}"
+          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-amd64, ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-amd64
 
-      - name: Build arm64 Container
+      - name: Build and Push ARM Docker Images
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile.arm
-          push: true
-          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
           platforms: linux/arm64
-          build-args: |
-            "VERSION=${{ env.VERSION }}"
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64, ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64
 
-      - name: Create Manifest :latest
+      # Create and push manifest for multi-arch image
+      - name: Create and Push Manifest (latest)
         run: |
-          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:latest \
-            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-amd64 \
-            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:latest --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-amd64 --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64
           docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
 
-      - name: Create manifest version
+      - name: Create and Push Manifest (version)
         run: |
-          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }} \
-            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-amd64 \
-            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }} --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-amd64 --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
           docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}
