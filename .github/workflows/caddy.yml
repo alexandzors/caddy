@@ -113,12 +113,14 @@ jobs:
 
       - name: Create Manifest :latest
         run: |
-          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-amd64 \
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:latest \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-amd64 \
             --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-arm64
           docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
 
       - name: Create manifest version
         run: |
-          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-amd64 \
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }} \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-amd64 \
             --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-arm64
           docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}
