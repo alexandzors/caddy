@@ -1,5 +1,5 @@
 # Third Party Note
-This is a third party build for https://caddyserver.com/. Please do not use this in a *production* environment. This is merely available for me and anyone else that needs a quick docker image / binary with the below plugins already installed. You can always use the download page @ https://caddyserver.com/download to generate your own binary. 
+This is a third party build for https://caddyserver.com/. Please do not use this in a *production* environment. This is merely available for me and anyone else that needs a quick docker image / binary with the below plugins already installed. You can always use the download page @ https://caddyserver.com/download to generate your own binary.
 
 Both the docker image and binary are built from Caddy sources with only the below-mentioned plugins!
 
@@ -24,16 +24,11 @@ Binary Releases: https://github.com/alexandzors/caddy/releases
 
 # Tags:
 
-***Note**: Tags have changed. The 'v' has been stripped from image tags. Please update your run/compose files!*
+***Note**: Tags have changed. Please consult the list below for avaliable tags*
 
-## amd64
-- `:latest` -- most recent Caddy stable version.
-- `:#.#.#` -- tagged stable version of Caddy (v2.7.6+ only)
+- `:latest` -- most recent Caddy stable version. (multi-arch aware)
+- `:#.#.#` -- tagged stable version of Caddy (v2.7.6+, multi-arch aware)
 - `:dev` -- used for testing stuff. DO NOT USE :)
-
-## arm64/v8
-- `:latest-arm64` -- most recent Caddy stable version for arm64.
-- `:#.#.#-arm64` -- tagged stable version of Caddy for arm64 (v2.7.6+ only)
 
 ## Windows Container version is currently not planned.
 
@@ -54,7 +49,7 @@ This image is built with the default [modules](https://caddyserver.com/docs/modu
 
 # Deploying with Docker Compose
 
-*This example includes an external docker network for other containers to attach to. This makes it, so you can deploy this, attach other containers to the network, and then call said containers via their dns name rather then container ip. To create the network: `docker network create caddy-dockerinternal-net` then in each service you want exposed by caddy, add both `networks:` blocks to their compose files. Caddy will use both the bridge network using ports 80/443 and talk to other containers over the `caddy-dockerinternal-net` network.* 
+*This example includes an external docker network for other containers to attach to. This makes it, so you can deploy this, attach other containers to the network, and then call said containers via their dns name rather then container ip. To create the network: `docker network create caddy-dockerinternal-net` then in each service you want exposed by caddy, add both `networks:` blocks to their compose files. Caddy will use both the bridge network using ports 80/443 and talk to other containers over the `caddy-dockerinternal-net` network.*
 
 ```yml
 # For use with <alexandzors/caddy>
