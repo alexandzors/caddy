@@ -30,7 +30,7 @@ Binary Releases: https://github.com/alexandzors/caddy/releases
 - `:#.#.#` -- tagged stable version of Caddy (v2.7.6+, multi-arch aware)
 - `:dev` -- used for testing stuff. DO NOT USE :)
 
-## Windows Container version is currently not planned.
+*Windows Container version is currently not planned.*
 
 # Added Modules:
 This image is built with the default [modules](https://caddyserver.com/docs/modules/) + the following:
