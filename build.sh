@@ -16,7 +16,6 @@ echo #################
 export GOOS=linux
 export GOARCH=arm64
 xcaddy build --output ./caddy_arm64 --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
-xcaddy build --output ./caddy_arm64-ssh --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/kadeessh/kadeessh
 cd ../darwin
 echo #################
 echo BUILD DARWIN

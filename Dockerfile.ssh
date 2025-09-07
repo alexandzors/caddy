@@ -2,11 +2,7 @@ ARG VERSION=2
 FROM --platform=$BUILDPLATFORM caddy:${VERSION}-alpine
 
 ARG TARGETARCH
-COPY ./amd64/caddy-ssh /usr/bin/caddy-amd64-ssh
-COPY ./arm64/caddy_arm64-ssh /usr/bin/caddy-arm64-ssh
-
-RUN if [ "$TARGETARCH" = "amd64" ]; then mv /usr/bin/caddy-amd64-ssh /usr/bin/caddy && rm /usr/bin/caddy-arm64-ssh; \
-    elif [ "$TARGETARCH" = "arm64" ]; then mv /usr/bin/caddy-arm64-ssh /usr/bin/caddy && rm /usr/bin/caddy-amd64-ssh; fi
+COPY ./amd64/caddy-ssh /usr/bin/caddy
 RUN chmod +x /usr/bin/caddy
 
 LABEL org.opencontainers.image.authors="github.com/alexandzors"
