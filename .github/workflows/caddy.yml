@@ -102,3 +102,16 @@ jobs:
             ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
           build-args: |
             VERSION=${{ env.VERSION }}
+
+      - name: Build and Push Docker SSH Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.ssh
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-ssh
+            ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-ssh
+          build-args: |
+            VERSION=${{ env.VERSION }}
