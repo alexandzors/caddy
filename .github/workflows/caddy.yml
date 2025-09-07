@@ -78,6 +78,7 @@ jobs:
             ${{ steps.get_release_notes.outputs.body }}
           files: |
             amd64/caddy
+            amd64/caddy-l4
             amd64/caddy.exe
             arm64/caddy_arm64
             darwin/caddy_darwin
@@ -103,15 +104,15 @@ jobs:
           build-args: |
             VERSION=${{ env.VERSION }}
 
-      - name: Build and Push Docker SSH Image
+      - name: Build and Push Docker Layer-4 Image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.ssh
+          file: ./Dockerfile.l4
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-ssh
-            ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-ssh
+            ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-l4
+            ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-l4
           build-args: |
             VERSION=${{ env.VERSION }}

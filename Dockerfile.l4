@@ -2,7 +2,7 @@ ARG VERSION=2
 FROM --platform=$BUILDPLATFORM caddy:${VERSION}-alpine
 
 ARG TARGETARCH
-COPY ./amd64/caddy-ssh /usr/bin/caddy
+COPY ./amd64/caddy-l4 /usr/bin/caddy
 RUN chmod +x /usr/bin/caddy
 
 LABEL org.opencontainers.image.authors="github.com/alexandzors"
