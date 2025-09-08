@@ -81,6 +81,7 @@ jobs:
             amd64/caddy-l4
             amd64/caddy.exe
             arm64/caddy_arm64
+            arm64/caddy_arm64-l4
             darwin/caddy_darwin
 
       # Login to Docker Hub
@@ -109,7 +110,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile.l4
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-l4
