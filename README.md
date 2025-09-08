@@ -28,6 +28,8 @@ Binary Releases: https://github.com/alexandzors/caddy/releases
 
 - `:latest` -- most recent Caddy stable version. (multi-arch aware)
 - `:#.#.#` -- tagged stable version of Caddy (v2.7.6+, multi-arch aware)
+- `:latest-l4` -- most recent Caddy stable version. (all modules + layer 4)
+- `:#.#.#-l4` -- tagged stable version of Caddy (all modules + layer 4)
 - `:dev` -- used for testing stuff. DO NOT USE :)
 
 *Windows Container version is currently not planned.*
@@ -46,6 +48,7 @@ This image is built with the default [modules](https://caddyserver.com/docs/modu
 - [caddyserver/transform-encoder](https://github.com/caddyserver/transform-encoder)
 - [caddyserver/nginx-adapter](https://github.com/caddyserver/nginx-adapter)
 - [github.com/mholt/caddy-ratelimit](github.com/mholt/caddy-ratelimit)
+- [github.com/mholt/caddy-l4](github.com/molt/caddy-l4) *only avaliable on the -l4 tags currently.
 
 # Deploying with Docker Compose
 
