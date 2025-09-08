@@ -47,8 +47,8 @@ This image is built with the default [modules](https://caddyserver.com/docs/modu
 - [greenpau/caddy-security](https://github.com/greenpau/caddy-security)
 - [caddyserver/transform-encoder](https://github.com/caddyserver/transform-encoder)
 - [caddyserver/nginx-adapter](https://github.com/caddyserver/nginx-adapter)
-- [github.com/mholt/caddy-ratelimit](github.com/mholt/caddy-ratelimit)
-- [github.com/mholt/caddy-l4](github.com/molt/caddy-l4) *only avaliable on the -l4 tags currently.
+- [github.com/mholt/caddy-ratelimit](https://github.com/mholt/caddy-ratelimit)
+- [github.com/mholt/caddy-l4](https://github.com/molt/caddy-l4) *only avaliable on the -l4 tags currently.
 
 # Deploying with Docker Compose
 
