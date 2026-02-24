@@ -19,6 +19,8 @@ jobs:
             os: ubuntu-slim
           - platform: darwin
             os: macos-latest
+          - platform: windows/amd64
+            os: windows-latest
 
     runs-on: ${{ matrix.os }}
 
@@ -27,6 +29,7 @@ jobs:
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version: '1.25'
+          cache: true
 
       - name: Get xcaddy tool
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
@@ -46,13 +49,23 @@ jobs:
           xcaddy build --output ./darwin/caddy_darwin --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
           xcaddy build --output ./darwin/caddy_darwin-l4 --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
 
-      - name: Build Binaries Amd64 & Windows
-        if: ${{ matrix.platform == 'amd64' }}
+      - name: Build Binaries Windows
+        if: matrix.platform == 'windows/amd64'
+        env:
+          GOOS: windows
+          GOARCH: amd64
         run: |
-          GOOS=linux GOARCH=amd64 xcaddy build --output ./amd64/caddy --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
-          GOOS=linux GOARCH=amd64 xcaddy build --output ./amd64/caddy-l4 --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
-          GOOS=windows GOARCH=amd64 xcaddy build --output ./amd64/caddy.exe --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
-          GOOS=windows GOARCH=amd64 xcaddy build --output ./amd64/caddy-l4.exe --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
+          xcaddy build --output ./windows/caddy.exe --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
+          xcaddy build --output ./windows/caddy-l4.exe --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
+
+      - name: Build Binaries Amd64
+        if: ${{ matrix.platform == 'amd64' }}
+        env:
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          xcaddy build --output ./amd64/caddy --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
+          xcaddy build --output ./amd64/caddy-l4 --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
 
       - name: Build Binaries Arm64
         if: ${{ matrix.platform == 'arm64' }}
@@ -86,6 +99,7 @@ jobs:
       - name: Get Version
         id: caddy_version
         run: |
+          chmod +x ./amd64/caddy
           CADDY=$(./amd64/caddy version)
           vr="${CADDY}"
           VERSION=$(echo "$vr" | head -n1 | cut -d " " -f1 | sed 's/^v//')
@@ -223,6 +237,12 @@ jobs:
           name: darwin-binaries
           path: ./darwin
 
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: windows-binaries
+          path: ./windows
+
       - name: Get latest Caddy release notes
         id: get_release_notes
         uses: cardinalby/git-get-release-action@cedef2faf69cb7c55b285bad07688d04430b7ada # v1.2.4
@@ -268,8 +288,8 @@ jobs:
           files: |
             amd64/caddy
             amd64/caddy-l4
-            amd64/caddy.exe
-            amd64/caddy-l4.exe
+            windows/caddy.exe
+            windows/caddy-l4.exe
             arm64/caddy_arm64
             arm64/caddy_arm64-l4
             darwin/caddy_darwin
