@@ -37,11 +37,17 @@ jobs:
       - name: Pull Local Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Create output directory
+      - name: Create output directory (Unix)
+        if: ${{ matrix.platform != 'windows' }}
         run: mkdir -p ./${{ matrix.platform }}
 
+      - name: Create output directory (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: New-Item -ItemType Directory -Path "./${{ matrix.platform }}" -Force | Out-Null
+
       - name: Build Binaries MacOS
-        if: matrix.platform == 'darwin'
+        if: ${{ matrix.platform == 'darwin' }}
         env:
           GOOS: darwin
           GOARCH: arm64
@@ -50,7 +56,7 @@ jobs:
           xcaddy build --output ./darwin/caddy_darwin-l4 --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
 
       - name: Build Binaries Windows
-        if: matrix.platform == 'windows'
+        if: ${{ matrix.platform == 'windows' }}
         env:
           GOOS: windows
           GOARCH: amd64
@@ -255,8 +261,10 @@ jobs:
 
       - name: Parse release notes and remove mentions
         id: parse_release_notes
+        env:
+          RELEASE_BODY: ${{ steps.get_release_notes.outputs.body }}
         run: |
-          body="${{ steps.get_release_notes.outputs.body }}"
+          body="$RELEASE_BODY"
           changelog=$(echo "$body" | sed -E 's/@([a-zA-Z0-9_-]+)/\1/g')
           {
             echo "changelog<<__CHANGELOG__"
