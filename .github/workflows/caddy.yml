@@ -163,6 +163,7 @@ jobs:
       - name: Build and Push Docker Layer-4 Image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
+          provenance: false
           context: .
           file: ./Dockerfile.l4
           platforms: linux/${{ matrix.platform }}
