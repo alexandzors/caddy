@@ -2,118 +2,250 @@ name: Caddy
 on:
   workflow_dispatch:
   repository_dispatch:
-    types: Caddy
+    types: [Caddy]
   workflow_run:
     workflows: ["Notify"]
     types:
       - completed
 
 jobs:
-  build-release:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - platform: amd64
+            os: ubuntu-slim
+          - platform: arm64
+            os: ubuntu-slim
+          - platform: darwin
+            os: macos-latest
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      # Setup
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: 'arm64,amd64'
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version: '1.25'
 
-      # Install xcaddy for binary building
       - name: Get xcaddy tool
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 
       - name: Pull Local Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      # Build Caddy binaries with xcaddy
-      - name: Build Binaries
+      - name: Create output directory
+        run: mkdir -p ./${{ matrix.platform }}
+
+      - name: Build Binaries MacOS
+        if: matrix.platform == 'darwin'
+        env:
+          GOOS: darwin
+          GOARCH: arm64
         run: |
-          bash build.sh
+          xcaddy build --output ./darwin/caddy_darwin --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
+          xcaddy build --output ./darwin/caddy_darwin-l4 --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
 
-      # Get caddy version from binarys and set version/tag info
+      - name: Build Binaries Amd64 & Windows
+        if: ${{ matrix.platform == 'amd64' }}
+        run: |
+          GOOS=linux GOARCH=amd64 xcaddy build --output ./amd64/caddy --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
+          GOOS=linux GOARCH=amd64 xcaddy build --output ./amd64/caddy-l4 --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
+          GOOS=windows GOARCH=amd64 xcaddy build --output ./amd64/caddy.exe --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
+          GOOS=windows GOARCH=amd64 xcaddy build --output ./amd64/caddy-l4.exe --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
+
+      - name: Build Binaries Arm64
+        if: ${{ matrix.platform == 'arm64' }}
+        env:
+          GOOS: linux
+          GOARCH: arm64
+        run: |
+          xcaddy build --output ./arm64/caddy_arm64 --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit
+          xcaddy build --output ./arm64/caddy_arm64-l4 --with github.com/WeidiDeng/caddy-cloudflare-ip --with github.com/caddy-dns/cloudflare --with github.com/caddyserver/ntlm-transport --with github.com/caddyserver/replace-response --with github.com/greenpau/caddy-security --with github.com/caddyserver/transform-encoder --with github.com/caddyserver/nginx-adapter --with github.com/mholt/caddy-ratelimit --with github.com/mholt/caddy-l4
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ${{ matrix.platform }}-binaries
+          path: |
+            ./${{ matrix.platform }}/
+
+  version:
+    needs: build
+    runs-on: ubuntu-slim
+    outputs:
+      VERSION: ${{ steps.caddy_version.outputs.VERSION }}
+      TAG: ${{ steps.caddy_version.outputs.TAG }}
+    steps:
+      - name: Download Amd64 Artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: amd64-binaries
+
       - name: Get Version
         id: caddy_version
         run: |
           CADDY=$(./amd64/caddy version)
           vr="${CADDY}"
-          # Extract version and remove the 'v' from the version string for the 'version' variable
-          VERSION=$(echo $vr | head -n1 | cut -d " " -f1 | sed 's/^v//')
-          TAG=$( echo $vr | head -n1 | cut -d " " -f1 )
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "TAG=$TAG" >> $GITHUB_ENV
+          VERSION=$(echo "$vr" | head -n1 | cut -d " " -f1 | sed 's/^v//')
+          TAG=$(echo "$vr" | head -n1 | cut -d " " -f1)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Var Debug
-        run: |
-          echo "TAG: ${{ env.TAG }}"
-          echo "VERSION: ${{ env.VERSION }}"
+  build-docker:
+    strategy:
+      matrix:
+        include:
+          - platform: amd64
+          - platform: arm64
 
-      # Get the latest caddy release notes from version tag
-      - name: Get latest Caddy release notes
-        id: get_release_notes
-        uses: cardinalby/git-get-release-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag: ${{ env.TAG }}
-          repo: caddyserver/caddy
-
-      # Create Binary release with release notes from upstream
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.TAG }}
-          name: Caddy ${{ env.VERSION }}
-          body: |
-            **Caddy ${{ env.TAG }} release notes:**
-            _[caddyserver/caddy](https://github.com/caddyserver/caddy/releases/tag/${{ env.TAG }})_
-            ${{ steps.get_release_notes.outputs.body }}
-          files: |
-            amd64/caddy
-            amd64/caddy-l4
-            amd64/caddy.exe
-            arm64/caddy_arm64
-            arm64/caddy_arm64-l4
-            darwin/caddy_darwin
-
-      # Login to Docker Hub
+    needs: [build, version]
+    runs-on: ubuntu-slim
+    steps:
+      - name: Pull Local Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Docker Hub Login
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           username: ${{ secrets.DOCKER_HUB_USR }}
           password: ${{ secrets.DOCKER_HUB_PW }}
 
-      # Build and push multi-arch Docker images
-      - name: Build and Push Docker Images
-        uses: docker/build-push-action@v5
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
+          name: ${{ matrix.platform }}-binaries
+
+      - name: Prepare Docker Build Context Binaries
+        run: |
+          if [ "${{ matrix.platform }}" = "amd64" ]; then
+            cp ./amd64/caddy ./caddy
+            cp ./amd64/caddy-l4 ./caddy-l4
+          elif [ "${{ matrix.platform }}" = "arm64" ]; then
+            cp ./arm64/caddy_arm64 ./caddy
+            cp ./arm64/caddy_arm64-l4 ./caddy-l4
+          else
+            echo "Unsupported docker platform: ${{ matrix.platform }}"
+            exit 1
+          fi
+
+      - name: Build and Push Docker Images
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          provenance: false
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/${{ matrix.platform }}
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}
-            ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
+            ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-${{ matrix.platform }}
           build-args: |
-            VERSION=${{ env.VERSION }}
+            VERSION=${{ needs.version.outputs.VERSION }}
 
       - name: Build and Push Docker Layer-4 Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: ./Dockerfile.l4
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/${{ matrix.platform }}
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ env.VERSION }}-l4
-            ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-l4
+            ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-${{ matrix.platform }}-l4
           build-args: |
-            VERSION=${{ env.VERSION }}
+            VERSION=${{ needs.version.outputs.VERSION }}
+
+  create-manifests:
+    needs: [build-docker, version]
+    runs-on: ubuntu-slim
+    steps:
+      - name: Docker Hub Login
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          username: ${{ secrets.DOCKER_HUB_USR }}
+          password: ${{ secrets.DOCKER_HUB_PW }}
+
+      - name: Create and Push Manifest for :${{ needs.version.outputs.VERSION }}
+        run: |
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }} \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-amd64 \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-arm64
+          docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}
+
+      - name: Create and Push Manifest for :${{ needs.version.outputs.VERSION }}-l4
+        run: |
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-l4 \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-amd64-l4 \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-arm64-l4
+          docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-l4
+
+      - name: Create and Push Manifest for :latest
+        run: |
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:latest \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-amd64 \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-arm64
+          docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:latest
+
+      - name: Create and Push Manifest for :latest-l4
+        run: |
+          docker manifest create ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-l4 \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-amd64-l4 \
+            --amend ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-arm64-l4
+          docker manifest push ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-l4
+
+  create-release:
+    needs: [build, create-manifests, version]
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    steps:
+      - name: Pull Local Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          path: .
+          pattern: "*-binaries"
+          merge-multiple: true
+
+      - name: Get latest Caddy release notes
+        id: get_release_notes
+        uses: cardinalby/git-get-release-action@cedef2faf69cb7c55b285bad07688d04430b7ada # v1.2.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag: ${{ needs.version.outputs.TAG }}
+          repo: caddyserver/caddy
+
+      - name: Generate Release
+        id: generate_release
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          tag_name: ${{ needs.version.outputs.TAG }}
+          name: Caddy ${{ needs.version.outputs.VERSION }}
+          body: |
+            **Caddy ${{ needs.version.outputs.TAG }} release notes:**
+            _[caddyserver/caddy](https://github.com/caddyserver/caddy/releases/tag/${{ needs.version.outputs.TAG }})_
+            ${{ steps.get_release_notes.outputs.body }}
+
+            ---
+
+            ## Docker Images
+
+            Available on Docker Hub for ${{ secrets.DOCKER_HUB_USR }}/caddy:
+
+            - `docker pull ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}`
+            - `docker pull ${{ secrets.DOCKER_HUB_USR }}/caddy:${{ needs.version.outputs.VERSION }}-l4`
+            - `docker pull ${{ secrets.DOCKER_HUB_USR }}/caddy:latest`
+            - `docker pull ${{ secrets.DOCKER_HUB_USR }}/caddy:latest-l4`
+
+          files: |
+            amd64/caddy
+            amd64/caddy-l4
+            amd64/caddy.exe
+            amd64/caddy-l4.exe
+            arm64/caddy_arm64
+            arm64/caddy_arm64-l4
+            darwin/caddy_darwin
+            darwin/caddy_darwin-l4
