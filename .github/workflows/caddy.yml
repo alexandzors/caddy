@@ -160,7 +160,7 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - name: Docker Hub Login
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           username: ${{ secrets.DOCKER_HUB_USR }}
           password: ${{ secrets.DOCKER_HUB_PW }}
@@ -218,6 +218,17 @@ jobs:
           tag: ${{ needs.version.outputs.TAG }}
           repo: caddyserver/caddy
 
+      - name: Parse release notes and remove mentions
+        id: parse_release_notes
+        run: |
+          body="${{ steps.get_release_notes.outputs.body }}"
+          changelog=$(echo "$body" | sed -E 's/@([a-zA-Z0-9_-]+)/\1/g')
+          {
+            echo "changelog<<__CHANGELOG__"
+            echo "$changelog"
+            echo "__CHANGELOG__"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Generate Release
         id: generate_release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
@@ -227,7 +238,7 @@ jobs:
           body: |
             **Caddy ${{ needs.version.outputs.TAG }} release notes:**
             _[caddyserver/caddy](https://github.com/caddyserver/caddy/releases/tag/${{ needs.version.outputs.TAG }})_
-            ${{ steps.get_release_notes.outputs.body }}
+            ${{ steps.parse_release_notes.outputs.changelog }}
 
             ---
 
