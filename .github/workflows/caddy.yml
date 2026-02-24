@@ -68,6 +68,7 @@ jobs:
           name: ${{ matrix.platform }}-binaries
           path: |
             ./${{ matrix.platform }}/
+          retention-days: 1
 
   version:
     needs: build
