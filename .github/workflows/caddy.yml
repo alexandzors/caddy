@@ -115,7 +115,7 @@ jobs:
           - platform: arm64
 
     needs: [build, version]
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Pull Local Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -174,7 +174,7 @@ jobs:
 
   create-manifests:
     needs: [build-docker, version]
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Docker Hub Login
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
