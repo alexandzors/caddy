@@ -81,6 +81,7 @@ jobs:
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: amd64-binaries
+          path: ./amd64
 
       - name: Get Version
         id: caddy_version
@@ -117,6 +118,7 @@ jobs:
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: ${{ matrix.platform }}-binaries
+          path: ./${{ matrix.platform }}
 
       - name: Prepare Docker Build Context Binaries
         run: |
@@ -203,12 +205,23 @@ jobs:
       - name: Pull Local Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Download Artifacts
+      - name: Download Amd64 Artifacts
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          path: .
-          pattern: "*-binaries"
-          merge-multiple: true
+          name: amd64-binaries
+          path: ./amd64
+
+      - name: Download Arm64 Artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: arm64-binaries
+          path: ./arm64
+
+      - name: Download Darwin Artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: darwin-binaries
+          path: ./darwin
 
       - name: Get latest Caddy release notes
         id: get_release_notes
