@@ -1,7 +1,6 @@
-# Third Party Note
-This is a third party build for https://caddyserver.com/. Please do not use this in a *production* environment. This is merely available for me and anyone else that needs a quick docker image / binary with the below plugins already installed. You can always use the download page @ https://caddyserver.com/download to generate your own binary.
-
-Both the docker image and binary are built from Caddy sources with only the below-mentioned plugins!
+> [!IMPORTANT]
+> ## Third Party Note
+> This is a third party build for https://caddyserver.com/. Please do not use this in a *production* environment. This is merely available for me and anyone else that needs a quick docker image / binary with the below plugins already installed. You can always use the download page @ https://caddyserver.com/download to generate your own binary.
 
 # Caddy
 [![Caddy](https://github.com/alexandzors/caddy/actions/workflows/caddy.yml/badge.svg?branch=main)](https://github.com/alexandzors/caddy/actions/workflows/caddy.yml)
@@ -22,7 +21,7 @@ Build Repo: https://github.com/alexandzors/caddy
 
 Binary Releases: https://github.com/alexandzors/caddy/releases
 
-# Tags:
+## Tags:
 
 ***Note**: Tags have changed. Please consult the list below for avaliable tags*
 
@@ -34,7 +33,7 @@ Binary Releases: https://github.com/alexandzors/caddy/releases
 
 *Windows Container version is currently not planned.*
 
-# Added Modules:
+## Added Modules:
 This image is built with the default [modules](https://caddyserver.com/docs/modules/) + the following:
 
 > #### ***Note**: sjtug/caddy2-filter has been replaced with caddyserver/replace-response
@@ -49,8 +48,9 @@ This image is built with the default [modules](https://caddyserver.com/docs/modu
 - [caddyserver/nginx-adapter](https://github.com/caddyserver/nginx-adapter)
 - [github.com/mholt/caddy-ratelimit](https://github.com/mholt/caddy-ratelimit)
 - [github.com/mholt/caddy-l4](https://github.com/mholt/caddy-l4) *only avaliable on the -l4 tags currently.
+- [github.com/hslatman/caddy-crowdsec-bouncer](https://github.com/hslatman/caddy-crowdsec-bouncer) *only avaliable on the -l4 tags currently.
 
-# Deploying with Docker Compose
+## Deploying with Docker Compose
 
 *This example includes an external docker network for other containers to attach to. This makes it, so you can deploy this, attach other containers to the network, and then call said containers via their dns name rather then container ip. To create the network: `docker network create caddy-dockerinternal-net` then in each service you want exposed by caddy, add both `networks:` blocks to their compose files. Caddy will use both the bridge network using ports 80/443 and talk to other containers over the `caddy-dockerinternal-net` network.*
 
@@ -86,19 +86,19 @@ networks:
 ```
 
 
-## .env file:
+### .env file:
 ```shell
 CLOUDFLARETOKEN=YOUR_CLOUDFLARE_TOKEN_HERE
 ```
 
 A more in depth docs breakdown can be found in the [official Caddy docker image repository](https://hub.docker.com/_/caddy).
 
-# Using the Cloudflare DNS module
+## Using the Cloudflare DNS module
 
 https://github.com/caddy-dns/cloudflare#config-examples
 > #### ***Note**: You will need to create a scoped API token for Caddy. DO NOT USE GLOBAL API KEYS. See [here](https://github.com/libdns/cloudflare).
 
-## Json API
+### Json API
 ```
 {
 	"module": "acme",
@@ -113,7 +113,7 @@ https://github.com/caddy-dns/cloudflare#config-examples
 }
 ```
 
-## Caddyfile
+### Caddyfile
 Make it a reusable block:
 
 ```
@@ -132,10 +132,10 @@ domain.tld {
 }
 ```
 
-# Using weidideng/caddy-cloudflare-ip
+## Using weidideng/caddy-cloudflare-ip
 Pulls Cloudflare endpoint IPs for use in `trusted_proxies` global config
 
-## JSON API
+### JSON API
 
 ```json
 {
@@ -159,7 +159,7 @@ Pulls Cloudflare endpoint IPs for use in `trusted_proxies` global config
 ```
 
 
-## Caddyfile
+### Caddyfile
 
 ```
 # Global Config
@@ -177,11 +177,11 @@ mysite.com {
 }
 ```
 
-# Using NTLM-Transport
+## Using NTLM-Transport
 
 `http_ntlm` acts the same as `http` except HTTP its always version 1.1 and Keep-Alive is disabled.
 
-## JSON API
+### JSON API
 ```json
 {
   "match": [
@@ -223,7 +223,7 @@ mysite.com {
 }
 ```
 
-## Caddyfile
+### Caddyfile
 ```
 wac.domain.tld {
   import tls
@@ -237,7 +237,60 @@ wac.domain.tld {
 }
 ```
 
-# Other Modules
+## Using Crowdsec
+https://github.com/hslatman/caddy-crowdsec-bouncer#example
+
+### Caddyfile
+```
+{
+  debug
+
+  crowdsec {
+    api_url http://localhost:8080
+    api_key <api_key>
+    ticker_interval 15s
+    appsec_url http://localhost:7422
+    #disable_streaming
+    #enable_hard_fails
+    #enable_caddy_error
+  }
+
+  layer4 {
+    localhost:4444 {
+      @crowdsec crowdsec
+      route @crowdsec {
+        proxy {
+          upstream localhost:6443
+        }
+      }
+    }
+  }
+}
+
+localhost:8443 {
+  route {
+    crowdsec
+    respond "Allowed by Bouncer!"
+  }
+}
+
+localhost:7443 {
+  route {
+    appsec
+    respond "Allowed by AppSec!"
+  }
+}
+
+localhost:6443 {
+  route {
+    crowdsec
+    appsec
+    respond "Allowed by Bouncer and AppSec!"
+  }
+}
+```
+
+## Other Modules
 
 - Replace-Response usage: [https://github.com/caddyserver/replace-response](https://github.com/caddyserver/replace-response)
 - Caddy-Security usage: [https://authp.github.io/docs/intro](https://authp.github.io/docs/intro)
