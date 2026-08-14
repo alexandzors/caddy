@@ -11,7 +11,7 @@ jobs:
     steps:
     - name: Grab Caddy Repo Info
       id: grabinfo
-      uses: cardinalby/git-get-release-action@v1
+      uses: cardinalby/git-get-release-action@2ab178299eecb253f820dcf2cce11f62be1178f7 #v1 commit May 16, 2026
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
